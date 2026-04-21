@@ -636,15 +636,18 @@ rfl::Variant<lsp::Definition, std::vector<lsp::DefinitionLink>, std::monostate> 
 }
 
 std::optional<lsp::Hover> SlangServer::getDocHover(const lsp::HoverParams& params) {
-    return m_driver->getDocHover(params.textDocument.uri, params.position, m_activeInstancePath);
+    return m_driver->getDocHover(params.textDocument.uri, params.position, m_activeInstances);
 }
 
 std::monostate SlangServer::setActiveInstance(const std::string& hierPath) {
     if (hierPath.empty()) {
-        m_activeInstancePath = std::nullopt;
+        m_activeInstances.clear();
+        return {};
     }
-    else {
-        m_activeInstancePath = hierPath;
+    if (m_driver->comp) {
+        if (auto moduleName = m_driver->comp->resolveModuleName(hierPath)) {
+            m_activeInstances[*moduleName] = hierPath;
+        }
     }
     return {};
 }

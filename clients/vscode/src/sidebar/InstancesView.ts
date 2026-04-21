@@ -18,8 +18,10 @@ export class InstanceViewItem {
   }
 
   getTreeItem(): vscode.TreeItem {
+    const isActive = this.parent.activeInstPath === this.data.instPath
     const item = new vscode.TreeItem(this.data.instPath, vscode.TreeItemCollapsibleState.None)
-    item.iconPath = new vscode.ThemeIcon('chip')
+    item.iconPath = new vscode.ThemeIcon(isActive ? 'check' : 'chip')
+    item.description = isActive ? 'active' : undefined
     item.contextValue = 'Instance'
     return item
   }
@@ -45,6 +47,7 @@ export class InstanceViewItem {
 export class ModuleItem {
   data: slang.Module
   instances: Map<string, InstanceViewItem> = new Map()
+  activeInstPath: string | undefined = undefined
 
   constructor(data: slang.Module) {
     this.data = data
@@ -53,12 +56,13 @@ export class ModuleItem {
   getTreeItem(): vscode.TreeItem {
     const item = new vscode.TreeItem(
       this.data.declName + ` (${this.data.instCount})`,
-      vscode.TreeItemCollapsibleState.Collapsed
+      // Only auto-expand single-instance modules; multi-instance requires explicit expansion
+      this.data.instCount === 1
+        ? vscode.TreeItemCollapsibleState.Expanded
+        : vscode.TreeItemCollapsibleState.Collapsed
     )
     item.iconPath = new vscode.ThemeIcon('file')
-    if (this.data.inst) {
-      item.collapsibleState = vscode.TreeItemCollapsibleState.Expanded
-    }
+    item.description = this.activeInstPath
     return item
   }
 
@@ -154,15 +158,28 @@ export class InstancesView
   )
 
   modules: Map<string, ModuleItem> = new Map()
+
   async updateModules() {
     const modules = await slang.getScopesByModule()
     this.modules = new Map()
     for (const mod of modules) {
       const item = new ModuleItem(mod)
+      // Auto-select the representative instance as the default active instance
+      if (mod.inst) {
+        item.activeInstPath = mod.inst.instPath
+        slang.setActiveInstance(mod.inst.instPath).catch(() => {})
+      }
       this.modules.set(mod.declName, item)
     }
-
     this._onDidChangeTreeData.fire()
+  }
+
+  setActive(moduleName: string, instPath: string) {
+    const moduleItem = this.modules.get(moduleName)
+    if (moduleItem) {
+      moduleItem.activeInstPath = instPath
+      this._onDidChangeTreeData.fire()
+    }
   }
 
   async clearModules() {

@@ -639,7 +639,7 @@ std::optional<DefinitionInfo> ServerDriver::getDefinitionInfoAt(const URI& uri,
 
 std::optional<lsp::Hover> ServerDriver::getDocHover(
     const URI& uri, const lsp::Position& position,
-    const std::optional<std::string>& activeInstancePath) {
+    const std::unordered_map<std::string, std::string>& activeInstances) {
     auto doc = getDocument(uri);
     if (!doc) {
         return {};
@@ -667,7 +667,7 @@ std::optional<lsp::Hover> ServerDriver::getDocHover(
         std::string_view moduleName = parentScope ? parentScope->asSymbol().name
                                                   : std::string_view{};
         elaboratedParamValue = comp->getElaboratedParamValue(moduleName, info.symbol->name,
-                                                             activeInstancePath);
+                                                             activeInstances);
     }
 
     return lsp::Hover{.contents = getHover(sm, doc->getBuffer(), info, elaboratedParamValue)};

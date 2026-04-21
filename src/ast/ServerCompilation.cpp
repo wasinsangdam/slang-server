@@ -53,9 +53,7 @@ std::vector<hier::InstanceSet> ServerCompilation::getScopesByModule() {
             .declLoc = toLocation(definition.getSyntax()->sourceRange(), m_sourceManager),
             .instCount = instances.size(),
         };
-        if (instances.size() == 1) {
-            instSet.inst = hier::toQualifiedInstance(*instances[0], m_sourceManager);
-        }
+        instSet.inst = hier::toQualifiedInstance(*instances[0], m_sourceManager);
         result.push_back(instSet);
     }
     return result;
@@ -248,17 +246,28 @@ static std::optional<std::string> lookupParamInInstance(const ast::InstanceSymbo
     return formatConstantValue(value);
 }
 
+std::optional<std::string> ServerCompilation::resolveModuleName(const std::string& instPath) {
+    auto& root = m_analysis->compilation.getRoot();
+    auto sym = root.lookupName(instPath, ast::LookupLocation::max,
+                               ast::LookupFlags::AllowUnnamedGenerate);
+    if (sym && sym->kind == ast::SymbolKind::Instance) {
+        return std::string{sym->as<ast::InstanceSymbol>().getDefinition().name};
+    }
+    return {};
+}
+
 std::optional<std::string> ServerCompilation::getElaboratedParamValue(
     std::string_view moduleName, std::string_view paramName,
-    const std::optional<std::string>& activeInstancePath) {
+    const std::unordered_map<std::string, std::string>& activeInstances) {
     if (moduleName.empty() || paramName.empty()) {
         return {};
     }
 
-    // Prefer the active instance if it's set and matches this module
-    if (activeInstancePath && !activeInstancePath->empty()) {
+    // Prefer the per-module active instance if one is set for this module
+    auto activeIt = activeInstances.find(std::string{moduleName});
+    if (activeIt != activeInstances.end()) {
         auto& root = m_analysis->compilation.getRoot();
-        auto sym = root.lookupName(*activeInstancePath, ast::LookupLocation::max,
+        auto sym = root.lookupName(activeIt->second, ast::LookupLocation::max,
                                    ast::LookupFlags::AllowUnnamedGenerate);
         if (sym && sym->kind == ast::SymbolKind::Instance) {
             auto& instSym = sym->as<ast::InstanceSymbol>();

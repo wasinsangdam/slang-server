@@ -89,8 +89,8 @@ public:
     // For access to indexer in tests
     using SlangServer::m_indexer;
 
-    // Expose active instance path so DocumentHandle::getHoverAt can pass it through
-    using SlangServer::m_activeInstancePath;
+    // Expose active instances map so DocumentHandle::getHoverAt can pass it through
+    using SlangServer::m_activeInstances;
 };
 
 enum DocState {

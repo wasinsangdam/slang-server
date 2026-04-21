@@ -640,6 +640,9 @@ export class ProjectComponent
 
       this.focused = instance
       slang.setActiveInstance(instance?.getPath() ?? '').catch(() => {})
+      if (instance instanceof InstanceItem) {
+        this.instancesView.setActive(instance.inst.declName, instance.getPath())
+      }
       if (revealHierarchy) {
         if (instance.isVirtualLoc && !this.includeMacroDefined) {
           await this.toggleHiddenFunc()

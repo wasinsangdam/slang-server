@@ -22,6 +22,8 @@
 #include <rfl/Generic.hpp>
 #include <rfl/Variant.hpp>
 #include <rfl/json.hpp>
+#include <string>
+#include <unordered_map>
 #include <variant>
 #include <vector>
 
@@ -68,8 +70,9 @@ protected:
     // The waveform viewer client
     std::optional<waves::WcpClient> m_wcpClient = std::nullopt;
 
-    // The hierarchical path of the currently active instance, set via slang.setActiveInstance
-    std::optional<std::string> m_activeInstancePath;
+    // Per-module active instance paths (module definition name → hierarchical path),
+    // updated via slang.setActiveInstance to enrich hover with elaborated values.
+    std::unordered_map<std::string, std::string> m_activeInstances;
 
 public:
     SlangServer(SlangLspClient& client);

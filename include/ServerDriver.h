@@ -113,11 +113,11 @@ public:
     /// @brief Gets hover information for a symbol at an LSP position
     /// @param uri The URI of the document
     /// @param position The LSP position to query
-    /// @param activeInstancePath Dot-separated hierarchical path of the active instance, if any
+    /// @param activeInstances Per-module active instance paths (module name → hier path)
     /// @return Optional hover information, or nullopt if none available
     std::optional<lsp::Hover> getDocHover(
         const URI& uri, const lsp::Position& position,
-        const std::optional<std::string>& activeInstancePath = {});
+        const std::unordered_map<std::string, std::string>& activeInstances = {});
 
     /// @brief Gets highlight positions for a symbol and all its references in a document
     /// @param uri The URI of the document
